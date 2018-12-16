@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package message;
+
+message Message{
+    int32 times = 1;
+    repeated StringInt32NumberPair pair = 2;
+}
+
+message StringInt32NumberPair {
+    string str = 1;
+    int32 int32Number = 2;
+}

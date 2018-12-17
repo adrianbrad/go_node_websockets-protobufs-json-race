@@ -25,8 +25,8 @@ wsProto.on('close', function close() {
     });
 
     wsJson.on('message', function incoming(message) {
-        console.log('json message received');
-        console.log(message);
+        // console.log('json message received');
+        // console.log(message);
         wsJson.send(message)
     })
 
@@ -38,11 +38,9 @@ wsProto.on('close', function close() {
 
 wsProto.on('message', function incoming(data) {
     console.log('proto message received');
-    var bytes = Array.prototype.slice.call(data, 0);
-    var message = proto.message.Message.deserializeBinary(bytes);
-
-    console.log(message.getTimes());
-    wsProto.send(message.serializeBinary());
+    // var bytes = Array.prototype.slice.call(data, 0);
+    // var message = proto.message.Message.deserializeBinary(bytes);
+    wsProto.send(data);
 });
 
 

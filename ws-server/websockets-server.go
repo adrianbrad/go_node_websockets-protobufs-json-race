@@ -11,8 +11,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-
-var times = int32(10000)
+var times = int32(1)
 
 var count = int32(0)
 
@@ -30,86 +29,89 @@ var upgrader = websocket.Upgrader{
 }
 
 type messageJson struct {
-	Times int32 `json:"times"`
+	Times int32                        `json:"times"`
 	Pair  []*StringInt32NumberPairJson `json:"pairs"`
 }
 
 type StringInt32NumberPairJson struct {
-	Str string `json:"string"`
-	Int32Number int32 `json:"number"`
+	Str         string `json:"string"`
+	Int32Number int32  `json:"number"`
 }
 
 func wsHandlerProto(w http.ResponseWriter, r *http.Request) {
 
 	conn, _ := upgrader.Upgrade(w, r, nil) // error ignored
 
-	start := time.Now()
-
 	_ = conn.WriteMessage(websocket.BinaryMessage, data)
 
+	//var msg = make([]byte, 10)
 	for {
-			_, msg, _ := conn.ReadMessage()
+		startReadingBytesTime := time.Now()
 
-			receivedMessage := &message.Message{}
+		_, msg, _ := conn.ReadMessage() // FIRST TIME THIS IS SO SLOW
 
-			_ = proto.Unmarshal(msg, receivedMessage)
+		endReadingBytesTime := time.Now()
 
-			if receivedMessage.Times < times {
-				count ++;
+		elapsedTimeReadingBytes := endReadingBytesTime.Sub(startReadingBytesTime)
 
-				incrementMessage(receivedMessage)
+		receivedMessage := &message.Message{}
 
-				toSend, _ := proto.Marshal(receivedMessage)
+		_ = proto.Unmarshal(msg, receivedMessage)
 
-				if err := conn.WriteMessage(websocket.BinaryMessage, toSend); err != nil {
-					return
-				}
+		fmt.Print("Protobufs reading elapsed time: " + string(elapsedTimeReadingBytes.String()+"\n"))
 
-			} else {
-				_ = conn.Close()
-				count = 0
-				t := time.Now()
-				elapsed := t.Sub(start)
-				fmt.Print("Protobufs elapsed time: " + string(elapsed.String() + "\n"))
-				return
-			}
+		count++
+
+		toSend, _ := proto.Marshal(receivedMessage)
+
+		if err := conn.WriteMessage(websocket.BinaryMessage, toSend); err != nil {
+			return
+		}
+
+		if count == times {
+			_ = conn.Close()
+			//t := time.Now()
+			count = 0
+			//elapsed := t.Sub(start)
+			//fmt.Print("Protobufs elapsed time: " + string(elapsed.String() + "\n"))
+			return
+		}
 	}
 }
 
 func wsHandlerJson(w http.ResponseWriter, r *http.Request) {
 	conn, _ := upgrader.Upgrade(w, r, nil) // error ignored
 
-	start := time.Now()
-
 	_ = conn.WriteJSON(jsonMessage)
 
 	for {
 		msg := messageJson{}
+
+		startReadingJsonTime := time.Now()
+
 		_ = conn.ReadJSON(&msg)
 
-		if msg.Times < times {
-			count ++;
+		endReadingJsonTime := time.Now()
+		elapsedTimeReadingJson := endReadingJsonTime.Sub(startReadingJsonTime)
 
-			msg.Times ++;
+		fmt.Print("Json reading elapsed time: " + string(elapsedTimeReadingJson.String()) + "\n")
 
-			if err := conn.WriteJSON(msg); err != nil {
-				return
-			}
+		count++
 
-		} else {
+		if err := conn.WriteJSON(msg); err != nil {
+			return
+		}
+
+		if count == times {
 			_ = conn.Close()
+			//t := time.Now()
+			//elapsed := t.Sub(start)
 			count = 0
-			t := time.Now()
-			elapsed := t.Sub(start)
-			fmt.Print("Json elapsed time: " + string(elapsed.String() + "\n"))
+			//fmt.Print("Json elapsed time: " + string(elapsed.String() + "\n"))
 			return
 		}
 	}
 
-}
-
-func incrementMessage(message *message.Message) {
-	message.Times ++
 }
 
 func main() {
@@ -129,9 +131,9 @@ func composeBinaryPayload() ([]byte, error) {
 	pairs := make([]*message.StringInt32NumberPair, 1)
 
 	pair := message.StringInt32NumberPair{
-			Str: "First Pair",
-			Int32Number: int32(12345),
-		}
+		Str:         "First Pair",
+		Int32Number: int32(1234567891),
+	}
 
 	pairs = append(pairs, &pair)
 
@@ -140,22 +142,22 @@ func composeBinaryPayload() ([]byte, error) {
 		Pair:  pairs,
 	}
 
-	return proto.Marshal(msg);
+	return proto.Marshal(msg)
 }
 
-func composeJsonPayload() messageJson{
-	pairs := make([]*StringInt32NumberPairJson, 0)
+func composeJsonPayload() messageJson {
+	pairs := make([]*StringInt32NumberPairJson, 1)
 
 	pair := StringInt32NumberPairJson{
-		Str: "First Pair",
-		Int32Number: int32(12345),
+		Str:         "First Pair",
+		Int32Number: int32(1234567891),
 	}
 
 	pairs = append(pairs, &pair)
 
 	msg := messageJson{
 		Times: 0,
-		Pair: pairs,
+		Pair:  pairs,
 	}
 
 	return msg

@@ -21,11 +21,12 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type Message struct {
-	Times                int32                    `protobuf:"varint,1,opt,name=times,proto3" json:"times,omitempty"`
-	Pair                 []*StringInt32NumberPair `protobuf:"bytes,2,rep,name=pair,proto3" json:"pair,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                 `json:"-"`
-	XXX_unrecognized     []byte                   `json:"-"`
-	XXX_sizecache        int32                    `json:"-"`
+	Integer              int64             `protobuf:"varint,1,opt,name=integer,proto3" json:"integer,omitempty"`
+	Floating             float64           `protobuf:"fixed64,2,opt,name=floating,proto3" json:"floating,omitempty"`
+	Pairs                []*TextNumberPair `protobuf:"bytes,3,rep,name=pairs,proto3" json:"pairs,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
 }
 
 func (m *Message) Reset()         { *m = Message{} }
@@ -53,84 +54,92 @@ func (m *Message) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Message proto.InternalMessageInfo
 
-func (m *Message) GetTimes() int32 {
+func (m *Message) GetInteger() int64 {
 	if m != nil {
-		return m.Times
+		return m.Integer
 	}
 	return 0
 }
 
-func (m *Message) GetPair() []*StringInt32NumberPair {
+func (m *Message) GetFloating() float64 {
 	if m != nil {
-		return m.Pair
+		return m.Floating
+	}
+	return 0
+}
+
+func (m *Message) GetPairs() []*TextNumberPair {
+	if m != nil {
+		return m.Pairs
 	}
 	return nil
 }
 
-type StringInt32NumberPair struct {
-	Str                  string   `protobuf:"bytes,1,opt,name=str,proto3" json:"str,omitempty"`
-	Int32Number          int32    `protobuf:"varint,2,opt,name=int32Number,proto3" json:"int32Number,omitempty"`
+type TextNumberPair struct {
+	Text                 string   `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	Number               int64    `protobuf:"varint,2,opt,name=number,proto3" json:"number,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *StringInt32NumberPair) Reset()         { *m = StringInt32NumberPair{} }
-func (m *StringInt32NumberPair) String() string { return proto.CompactTextString(m) }
-func (*StringInt32NumberPair) ProtoMessage()    {}
-func (*StringInt32NumberPair) Descriptor() ([]byte, []int) {
+func (m *TextNumberPair) Reset()         { *m = TextNumberPair{} }
+func (m *TextNumberPair) String() string { return proto.CompactTextString(m) }
+func (*TextNumberPair) ProtoMessage()    {}
+func (*TextNumberPair) Descriptor() ([]byte, []int) {
 	return fileDescriptor_33c57e4bae7b9afd, []int{1}
 }
 
-func (m *StringInt32NumberPair) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_StringInt32NumberPair.Unmarshal(m, b)
+func (m *TextNumberPair) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_TextNumberPair.Unmarshal(m, b)
 }
-func (m *StringInt32NumberPair) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_StringInt32NumberPair.Marshal(b, m, deterministic)
+func (m *TextNumberPair) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_TextNumberPair.Marshal(b, m, deterministic)
 }
-func (m *StringInt32NumberPair) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StringInt32NumberPair.Merge(m, src)
+func (m *TextNumberPair) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TextNumberPair.Merge(m, src)
 }
-func (m *StringInt32NumberPair) XXX_Size() int {
-	return xxx_messageInfo_StringInt32NumberPair.Size(m)
+func (m *TextNumberPair) XXX_Size() int {
+	return xxx_messageInfo_TextNumberPair.Size(m)
 }
-func (m *StringInt32NumberPair) XXX_DiscardUnknown() {
-	xxx_messageInfo_StringInt32NumberPair.DiscardUnknown(m)
+func (m *TextNumberPair) XXX_DiscardUnknown() {
+	xxx_messageInfo_TextNumberPair.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_StringInt32NumberPair proto.InternalMessageInfo
+var xxx_messageInfo_TextNumberPair proto.InternalMessageInfo
 
-func (m *StringInt32NumberPair) GetStr() string {
+func (m *TextNumberPair) GetText() string {
 	if m != nil {
-		return m.Str
+		return m.Text
 	}
 	return ""
 }
 
-func (m *StringInt32NumberPair) GetInt32Number() int32 {
+func (m *TextNumberPair) GetNumber() int64 {
 	if m != nil {
-		return m.Int32Number
+		return m.Number
 	}
 	return 0
 }
 
 func init() {
 	proto.RegisterType((*Message)(nil), "message.Message")
-	proto.RegisterType((*StringInt32NumberPair)(nil), "message.StringInt32NumberPair")
+	proto.RegisterType((*TextNumberPair)(nil), "message.TextNumberPair")
 }
 
 func init() { proto.RegisterFile("message.proto", fileDescriptor_33c57e4bae7b9afd) }
 
 var fileDescriptor_33c57e4bae7b9afd = []byte{
-	// 148 bytes of a gzipped FileDescriptorProto
+	// 165 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xcd, 0x4d, 0x2d, 0x2e,
-	0x4e, 0x4c, 0x4f, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x87, 0x72, 0x95, 0x82, 0xb9,
-	0xd8, 0x7d, 0x21, 0x4c, 0x21, 0x11, 0x2e, 0xd6, 0x92, 0xcc, 0xdc, 0xd4, 0x62, 0x09, 0x46, 0x05,
-	0x46, 0x0d, 0xd6, 0x20, 0x08, 0x47, 0xc8, 0x88, 0x8b, 0xa5, 0x20, 0x31, 0xb3, 0x48, 0x82, 0x49,
-	0x81, 0x59, 0x83, 0xdb, 0x48, 0x4e, 0x0f, 0x66, 0x4e, 0x70, 0x49, 0x51, 0x66, 0x5e, 0xba, 0x67,
-	0x5e, 0x89, 0xb1, 0x91, 0x5f, 0x69, 0x6e, 0x52, 0x6a, 0x51, 0x40, 0x62, 0x66, 0x51, 0x10, 0x58,
-	0xad, 0x92, 0x37, 0x97, 0x28, 0x56, 0x69, 0x21, 0x01, 0x2e, 0xe6, 0xe2, 0x92, 0x22, 0xb0, 0x05,
-	0x9c, 0x41, 0x20, 0xa6, 0x90, 0x02, 0x17, 0x77, 0x26, 0x42, 0x91, 0x04, 0x13, 0xd8, 0x6a, 0x64,
-	0xa1, 0x24, 0x36, 0xb0, 0x8b, 0x8d, 0x01, 0x01, 0x00, 0x00, 0xff, 0xff, 0xc8, 0xa8, 0x66, 0x83,
-	0xc2, 0x00, 0x00, 0x00,
+	0x4e, 0x4c, 0x4f, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x87, 0x72, 0x95, 0xf2, 0xb8,
+	0xd8, 0x7d, 0x21, 0x4c, 0x21, 0x09, 0x2e, 0xf6, 0xcc, 0xbc, 0x92, 0xd4, 0xf4, 0xd4, 0x22, 0x09,
+	0x46, 0x05, 0x46, 0x0d, 0xe6, 0x20, 0x18, 0x57, 0x48, 0x8a, 0x8b, 0x23, 0x2d, 0x27, 0x3f, 0xb1,
+	0x24, 0x33, 0x2f, 0x5d, 0x82, 0x49, 0x81, 0x51, 0x83, 0x31, 0x08, 0xce, 0x17, 0xd2, 0xe5, 0x62,
+	0x2d, 0x48, 0xcc, 0x2c, 0x2a, 0x96, 0x60, 0x56, 0x60, 0xd6, 0xe0, 0x36, 0x12, 0xd7, 0x83, 0x59,
+	0x14, 0x92, 0x5a, 0x51, 0xe2, 0x57, 0x9a, 0x9b, 0x94, 0x5a, 0x14, 0x90, 0x98, 0x59, 0x14, 0x04,
+	0x51, 0xa5, 0x64, 0xc3, 0xc5, 0x87, 0x2a, 0x21, 0x24, 0xc4, 0xc5, 0x52, 0x92, 0x5a, 0x51, 0x02,
+	0xb6, 0x93, 0x33, 0x08, 0xcc, 0x16, 0x12, 0xe3, 0x62, 0xcb, 0x03, 0xab, 0x00, 0x5b, 0xc7, 0x1c,
+	0x04, 0xe5, 0x25, 0xb1, 0x81, 0x5d, 0x6f, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0xfb, 0x30, 0x70,
+	0x02, 0xce, 0x00, 0x00, 0x00,
 }

@@ -3,11 +3,12 @@ syntax = "proto3";
 package message;
 
 message Message{
-    int32 times = 1;
-    repeated StringInt32NumberPair pair = 2;
+    int64 integer = 1;
+    double floating = 2;
+    repeated TextNumberPair pairs = 3;
 }
 
-message StringInt32NumberPair {
-    string str = 1;
-    int32 int32Number = 2;
+message TextNumberPair {
+    string text = 1;
+    int64 number = 2;
 }

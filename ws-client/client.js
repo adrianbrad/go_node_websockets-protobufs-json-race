@@ -1,55 +1,50 @@
 'use strict';
 const Message = require('./message_pb');
 const WebSocket = require('ws');
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+const host = "ws://localhost:8080"
 
-// startJson()
-startBinary()
-function startBinary() {
+class WebsocketConnection {
 
-    let wsProto = new WebSocket('ws://localhost:8080/proto', {
-        origin: 'http://localhost:8080'
-    });
+    constructor(host, endpoint, closeCb) {
+        this._endpoint = endpoint;
+        this._host = host;
+        this._closeCb = closeCb;
+    }
 
-    wsProto.on('open', function open() {
-        console.log('connected proto');
-    });
+    connect() {
+        this._ws = new WebSocket(this._host + "/" + this._endpoint, {
+            origin: this._host
+        });
+        this._ws.on('open', () => this.onOpen());
+        this._ws.on('message', (data) => this.incomingMessage(data));
+        this._ws.on('close', () => this.onClose());
+    }
 
-    wsProto.on('message', function incoming(data) {
-        // console.log('proto message received');
-        // console.log(data);
+    onOpen() {
+        console.log('connected ' + this._endpoint);
+    }
+
+    incomingMessage(data) {
+        // console.log(this._endpoint +' message received');
         // var bytes = Array.prototype.slice.call(data, 0);
         // var message = proto.message.Message.deserializeBinary(bytes);
-        // console.log(message)
-        wsProto.send(data);
-    });
+        // console.log(message);
+        this._ws.send(data)
+    }
 
-    wsProto.on('close', function close() {
-        console.log('disconnected proto')
-        startJson()
-    });
+    onClose() {
+        console.log('disconnected ' + this._endpoint);
+        if (this._closeCb) this._closeCb();
+    }
 }
 
-function startJson() {
 
-    let wsJson = new WebSocket('ws://localhost:8080/json', {
-        origin: 'http://localhost:8080'
-    });
+var wsProto = new WebsocketConnection(host, "proto", startJs);
+wsProto.connect();
 
-    wsJson.on('close', function close() {
-        console.log('disconnected json');
-        // startBinary()
-    });
-
-    wsJson.on('message', function incoming(message) {
-        // console.log('json message received');
-        // console.log(message);
-        wsJson.send(message)
-    })
-
-    wsJson.on('open', function open() {
-        console.log('connected json')
-    });
+function startJs() {
+    const js = new WebsocketConnection(host, "json");
+    js.connect();
 }
 
 

@@ -2,119 +2,129 @@ package main
 
 import (
 	"fmt"
-	"github.com/pkg/profile"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
-	"websockets-protobufs-json-race/ws-server/message"
+	"websockets-protobufs-json-race/proto"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 )
 
-var times = 1000000
+var (
+	times        = 20000
+	count        = 0
+	data         []byte
+	protoMessage = &message.Message{
+		Integer:  12,
+		Floating: 12.12,
+	}
 
-var count = 0
+	jsonMessage = messageJson{
+		Integer:  12,
+		Floating: 12.12,
+	}
 
-var data []byte
+	upgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			if "ws://"+r.Host == r.Header.Get("Origin") {
+				return true
+			}
+			return false
+		},
+	}
 
-var jsonMessage messageJson
-
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		if "http://"+r.Host == r.Header.Get("Origin") {
-			return true
-		}
-		return false
-	},
-}
+	wsProtoConnection *websocket.Conn
+	wsJsonConnection  *websocket.Conn
+)
 
 type messageJson struct {
-	Integer  int               `json:"integer"`
-	Floating float64           `json:"float"`
-	Pairs    []*textNumberPair `json:"pairs"`
+	Integer  int               `json:"integer,omitempty"`
+	Floating float64           `json:"float,omitempty"`
+	Pairs    []*textNumberPair `json:"pairs,omitempty"`
 }
 
 type textNumberPair struct {
-	Text   string `json:"text"`
-	Number int    `json:"number"`
+	Text   string `json:"text,omitempty"`
+	Number int    `json:"number,omitempty"`
 }
 
 func wsHandlerProto(w http.ResponseWriter, r *http.Request) {
 
-	conn, _ := upgrader.Upgrade(w, r, nil) // error ignored
+	wsProtoConnection, _ = upgrader.Upgrade(w, r, nil) // error ignored
 
-	_ = conn.WriteMessage(websocket.BinaryMessage, data)
+	_ = wsProtoConnection.WriteMessage(websocket.BinaryMessage, data)
 
-	_, msg, _ := conn.ReadMessage()
+	_, _, _ = wsProtoConnection.ReadMessage()
 
-	_ = conn.WriteMessage(websocket.BinaryMessage, data)
+	startProto()
+}
+
+func wsHandlerJson(w http.ResponseWriter, r *http.Request) {
+	wsJsonConnection, _ = upgrader.Upgrade(w, r, nil) // error ignored
+
+	_ = wsJsonConnection.WriteJSON(jsonMessage)
+
+	_ = wsJsonConnection.ReadJSON(&jsonMessage)
+
+	startJson()
+}
+
+func startProto() {
+
+	count = 0
+
+	_ = wsProtoConnection.WriteMessage(websocket.BinaryMessage, data)
+
+	var (
+		receivedMessageBytes        []byte
+		receivedMessageUnmarshalled = &message.Message{}
+		messageToBeSent             []byte
+	)
 
 	start := time.Now()
 	for {
-		//startReadingBytesTime := time.Now()
 
-		_, msg, _ = conn.ReadMessage()
+		_, receivedMessageBytes, _ = wsProtoConnection.ReadMessage()
 
-		//endReadingBytesTime := time.Now()
+		_ = proto.Unmarshal(receivedMessageBytes, receivedMessageUnmarshalled)
 
-		//elapsedTimeReadingBytes := endReadingBytesTime.Sub(startReadingBytesTime)
-		//fmt.Print("Protobufs reading elapsed time: " + string(elapsedTimeReadingBytes.String()+"\n"))
+		messageToBeSent, _ = proto.Marshal(receivedMessageUnmarshalled)
 
-		receivedMessage := &message.Message{}
-		//
-		_ = proto.Unmarshal(msg, receivedMessage)
-
-		count++
-
-		toSend, _ := proto.Marshal(receivedMessage)
-
-		_ = conn.WriteMessage(websocket.BinaryMessage, toSend)
+		_ = wsProtoConnection.WriteMessage(websocket.BinaryMessage, messageToBeSent)
 
 		count++
 
 		if count == times {
-			_ = conn.Close()
 			end := time.Now()
 			elapsedTime := end.Sub(start)
+
+			_ = wsProtoConnection.Close()
 			fmt.Printf("Protobufs elapsed time: %s\n", elapsedTime.String())
-			count = 0
 			return
 		}
 	}
 }
 
-func wsHandlerJson(w http.ResponseWriter, r *http.Request) {
-	conn, _ := upgrader.Upgrade(w, r, nil) // error ignored
+func startJson() {
 
-	_ = conn.WriteJSON(jsonMessage)
+	count = 0
 
-	msg := messageJson{}
+	_ = wsJsonConnection.WriteJSON(jsonMessage)
 
-	_ = conn.ReadJSON(&msg)
-
-	_ = conn.WriteJSON(jsonMessage)
 	start := time.Now()
 	for {
-		//startReadingJsonTime := time.Now()
 
-		_ = conn.ReadJSON(&msg)
-
-		//endReadingJsonTime := time.Now()
-		//elapsedTimeReadingJson := endReadingJsonTime.Sub(startReadingJsonTime)
-
-		//fmt.Print("Json reading elapsed time: " + string(elapsedTimeReadingJson.String()) + "\n")
+		_ = wsJsonConnection.ReadJSON(&jsonMessage)
 
 		count++
 
-		//if err := conn.WriteJSON(msg); err != nil {
-		//	return
-		//}
-
-		_ = conn.WriteJSON(msg)
+		_ = wsJsonConnection.WriteJSON(jsonMessage)
 
 		if count == times {
-			_ = conn.Close()
+			_ = wsJsonConnection.Close()
 			end := time.Now()
 			elapsedTime := end.Sub(start)
 			fmt.Printf("JSON elapsed time: %s\n", elapsedTime.String())
@@ -122,22 +132,17 @@ func wsHandlerJson(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
-}
-
-func functionElapsedTime(function string) func() {
-	start := time.Now()
-	return func() {
-		fmt.Printf("%s took %v\n", function, time.Since(start))
-	}
 }
 
 func main() {
-	defer profile.Start().Stop()
+	//defer profile.Start().Stop()
+	if len(os.Args) > 1 {
+		if givenTimes, err := strconv.Atoi(os.Args[1]); err == nil {
+			times = givenTimes
+		}
+	}
 
-	data, _ = composeBinaryPayload()
-
-	jsonMessage = composeJsonPayload()
+	data, _ = proto.Marshal(protoMessage)
 
 	http.HandleFunc("/proto", wsHandlerProto)
 
@@ -145,57 +150,4 @@ func main() {
 
 	_ = http.ListenAndServe("localhost:8080", nil)
 
-}
-
-func composeBinaryPayload() ([]byte, error) {
-	return proto.Marshal(&message.Message{
-		Integer: 12,
-		//	Floating: 12123412.1251313561,
-		//	Pairs:  []*message.TextNumberPair {
-		//		{
-		//			Text: "First Pair AFsamfnm,fqnwrmkllrqrqw;",
-		//			Number: 123456789124512,
-		//		},			{
-		//			Text: "First Pair AFsamfnm,fqnwrmkllrqrqw;",
-		//			Number: 123456789124512,
-		//		},			{
-		//			Text: "First Pair AFsamfnm,fqnwrmkllrqrqw;",
-		//			Number: 123456789124512,
-		//		},			{
-		//			Text: "First Pair AFsamfnm,fqnwrmkllrqrqw;",
-		//			Number: 123456789124512,
-		//		},			{
-		//			Text: "First Pair AFsamfnm,fqnwrmkllrqrqw;",
-		//			Number: 123456789124512,
-		//		},			{
-		//			Text: "First Pair AFsamfnm,fqnwrmkllrqrqw;",
-		//			Number: 123456789124512,
-		//		},
-		//	},
-	})
-}
-
-func composeJsonPayload() messageJson {
-	return messageJson{
-		Integer: 12,
-		//floating:   12124515.121516125,
-		//pairs:  []*textNumberPair{
-		//	{
-		//		text:   "First Pair afjqwjkrwnjkfwnq",
-		//		number: 123456789124512,
-		//	},			{
-		//		text:   "First Pair afjqwjkrwnjkfwnq",
-		//		number: 123456789124512,
-		//	},			{
-		//		text:   "First Pair afjqwjkrwnjkfwnq",
-		//		number: 123456789124512,
-		//	},			{
-		//		text:   "First Pair afjqwjkrwnjkfwnq",
-		//		number: 123456789124512,
-		//	},			{
-		//		text:   "First Pair afjqwjkrwnjkfwnq",
-		//		number: 123456789124512,
-		//	},
-		//},
-	}
 }

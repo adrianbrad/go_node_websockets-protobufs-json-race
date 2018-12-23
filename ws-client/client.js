@@ -6,6 +6,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const wsProto = new WebSocket('ws://localhost:8080/proto', {
     origin: 'http://localhost:8080'
 });
+// wsProto.binaryType = "arraybuffer"
 
 let wsJson;
 
@@ -37,9 +38,10 @@ wsProto.on('close', function close() {
 
 
 wsProto.on('message', function incoming(data) {
-    console.log('proto message received');
+    // console.log('proto message received');
     // var bytes = Array.prototype.slice.call(data, 0);
     // var message = proto.message.Message.deserializeBinary(bytes);
+
     wsProto.send(data);
 });
 

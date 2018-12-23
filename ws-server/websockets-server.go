@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var times = int32(1)
+var times = int32(10)
 
 var count = int32(0)
 
@@ -39,26 +39,37 @@ type StringInt32NumberPairJson struct {
 }
 
 func wsHandlerProto(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
 
 	conn, _ := upgrader.Upgrade(w, r, nil) // error ignored
 
+	//conn.EnableWriteCompression(true)
+	//firstMsg := time.Now()
+	//fmt.Println(firstMsg.Nanosecond())
+
 	_ = conn.WriteMessage(websocket.BinaryMessage, data)
 
-	//var msg = make([]byte, 10)
+	//endSendingFirstMsg := time.Now()
+	//fmt.Println(endSendingFirstMsg.Nanosecond())
+	//
+	//
+	//elapsedTimeSendingMsg := endSendingFirstMsg.Sub(firstMsg)
+	//fmt.Print("Protobufs sending first msg elapsed time: " + string(elapsedTimeSendingMsg.String()+"\n"))
+
 	for {
-		startReadingBytesTime := time.Now()
+
+		//startReadingBytesTime := time.Now()
 
 		_, msg, _ := conn.ReadMessage() // FIRST TIME THIS IS SO SLOW
 
-		endReadingBytesTime := time.Now()
+		//endReadingBytesTime := time.Now()
 
-		elapsedTimeReadingBytes := endReadingBytesTime.Sub(startReadingBytesTime)
+		//elapsedTimeReadingBytes := endReadingBytesTime.Sub(startReadingBytesTime)
+		//fmt.Print("Protobufs reading elapsed time: " + string(elapsedTimeReadingBytes.String()+"\n"))
 
 		receivedMessage := &message.Message{}
 
 		_ = proto.Unmarshal(msg, receivedMessage)
-
-		fmt.Print("Protobufs reading elapsed time: " + string(elapsedTimeReadingBytes.String()+"\n"))
 
 		count++
 
@@ -70,16 +81,18 @@ func wsHandlerProto(w http.ResponseWriter, r *http.Request) {
 
 		if count == times {
 			_ = conn.Close()
-			//t := time.Now()
+			t := time.Now()
+			elapsed := t.Sub(start)
+			fmt.Print("Protobufs elapsed time: " + string(elapsed.String()+"\n"))
 			count = 0
-			//elapsed := t.Sub(start)
-			//fmt.Print("Protobufs elapsed time: " + string(elapsed.String() + "\n"))
 			return
 		}
 	}
 }
 
 func wsHandlerJson(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+
 	conn, _ := upgrader.Upgrade(w, r, nil) // error ignored
 
 	_ = conn.WriteJSON(jsonMessage)
@@ -87,14 +100,14 @@ func wsHandlerJson(w http.ResponseWriter, r *http.Request) {
 	for {
 		msg := messageJson{}
 
-		startReadingJsonTime := time.Now()
+		//startReadingJsonTime := time.Now()
 
 		_ = conn.ReadJSON(&msg)
 
-		endReadingJsonTime := time.Now()
-		elapsedTimeReadingJson := endReadingJsonTime.Sub(startReadingJsonTime)
+		//endReadingJsonTime := time.Now()
+		//elapsedTimeReadingJson := endReadingJsonTime.Sub(startReadingJsonTime)
 
-		fmt.Print("Json reading elapsed time: " + string(elapsedTimeReadingJson.String()) + "\n")
+		//fmt.Print("Json reading elapsed time: " + string(elapsedTimeReadingJson.String()) + "\n")
 
 		count++
 
@@ -104,10 +117,10 @@ func wsHandlerJson(w http.ResponseWriter, r *http.Request) {
 
 		if count == times {
 			_ = conn.Close()
-			//t := time.Now()
-			//elapsed := t.Sub(start)
+			t := time.Now()
+			elapsed := t.Sub(start)
+			fmt.Print("Json elapsed time: " + string(elapsed.String()+"\n"))
 			count = 0
-			//fmt.Print("Json elapsed time: " + string(elapsed.String() + "\n"))
 			return
 		}
 	}
@@ -138,7 +151,7 @@ func composeBinaryPayload() ([]byte, error) {
 	pairs = append(pairs, &pair)
 
 	msg := &message.Message{
-		Times: 0,
+		Times: 123,
 		Pair:  pairs,
 	}
 
@@ -156,7 +169,7 @@ func composeJsonPayload() messageJson {
 	pairs = append(pairs, &pair)
 
 	msg := messageJson{
-		Times: 0,
+		Times: 123,
 		Pair:  pairs,
 	}
 

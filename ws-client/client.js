@@ -21,19 +21,15 @@ class WebsocketConnection {
     }
 
     onOpen() {
-        console.log('connected ' + this._endpoint);
+        // console.log('connected ' + this._endpoint);
     }
 
     incomingMessage(data) {
-        // console.log(this._endpoint +' message received');
-        // var bytes = Array.prototype.slice.call(data, 0);
-        // var message = proto.message.Message.deserializeBinary(bytes);
-        // console.log(message);
         this._ws.send(data)
     }
 
     onClose() {
-        console.log('disconnected ' + this._endpoint);
+        // console.log('disconnected ' + this._endpoint);
         if (this._closeCb) this._closeCb();
     }
 }

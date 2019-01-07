@@ -1,1 +1,3 @@
 go tool pprof -show_from HandlerFunc --pdf /path/to/binfile /path/to/file.pprof > file.pdf
+
+chmod 755 runAll.sh

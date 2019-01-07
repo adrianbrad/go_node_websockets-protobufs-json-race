@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/pkg/profile"
 	"math"
 	"net/http"
 	"os"
@@ -15,10 +16,6 @@ import (
 )
 
 var (
-	times = 20000
-	count = 0
-	data  []byte
-
 	small_protoMessage = &message.Message{
 		Integer:  9,
 		Floating: 1.1,
@@ -81,6 +78,13 @@ var (
 			return false
 		},
 	}
+
+	times             = 20000
+	count             = 0
+	protoMessageBytes []byte
+	jsonMessage       messageJson
+	profileStart      interface{ Stop() }
+	//profileStart profile.Profile
 )
 
 type messageJson struct {
@@ -98,7 +102,7 @@ func wsHandlerProto(w http.ResponseWriter, r *http.Request) {
 
 	wsProtoConnection, _ := upgrader.Upgrade(w, r, nil) // error ignored
 
-	_ = wsProtoConnection.WriteMessage(websocket.BinaryMessage, data)
+	_ = wsProtoConnection.WriteMessage(websocket.BinaryMessage, protoMessageBytes)
 
 	_, _, _ = wsProtoConnection.ReadMessage()
 
@@ -108,9 +112,9 @@ func wsHandlerProto(w http.ResponseWriter, r *http.Request) {
 func wsHandlerJson(w http.ResponseWriter, r *http.Request) {
 	wsJsonConnection, _ := upgrader.Upgrade(w, r, nil) // error ignored
 
-	_ = wsJsonConnection.WriteJSON(big_jsonMessage)
+	_ = wsJsonConnection.WriteJSON(jsonMessage)
 
-	_ = wsJsonConnection.ReadJSON(&big_jsonMessage)
+	_ = wsJsonConnection.ReadJSON(&jsonMessage)
 
 	startJson(wsJsonConnection)
 }
@@ -119,14 +123,13 @@ func startProto(wsProtoConnection *websocket.Conn) {
 
 	count = 0
 
-	_ = wsProtoConnection.WriteMessage(websocket.BinaryMessage, data)
+	_ = wsProtoConnection.WriteMessage(websocket.BinaryMessage, protoMessageBytes)
 
 	var (
 		receivedMessageBytes        []byte
 		receivedMessageUnmarshalled = &message.Message{}
 		messageToBeSent             []byte
 	)
-
 	start := time.Now()
 	for {
 
@@ -155,41 +158,64 @@ func startJson(wsJsonConnection *websocket.Conn) {
 
 	count = 0
 
-	_ = wsJsonConnection.WriteJSON(small_jsonMessage)
+	_ = wsJsonConnection.WriteJSON(jsonMessage)
 
 	start := time.Now()
 	for {
 
-		_ = wsJsonConnection.ReadJSON(&small_jsonMessage)
+		_ = wsJsonConnection.ReadJSON(&jsonMessage)
+
+		_ = wsJsonConnection.WriteJSON(jsonMessage)
 
 		count++
-
-		_ = wsJsonConnection.WriteJSON(small_jsonMessage)
 
 		if count == times {
 			_ = wsJsonConnection.Close()
 			end := time.Now()
 			elapsedTime := end.Sub(start)
-			fmt.Printf("JSON elapsed time: %s\n", elapsedTime.String())
+			fmt.Printf("JSON elapsed time: %s\n\n", elapsedTime.String())
 			count = 0
+			profileStart.Stop()
+
+			os.Exit(0)
 			return
 		}
 	}
 }
 
 func main() {
-	//defer profile.Start().Stop()
 	if len(os.Args) > 1 {
 		if givenTimes, err := strconv.Atoi(os.Args[1]); err == nil {
 			times = givenTimes
 		}
+
+		switch os.Args[2] {
+		case "s":
+			protoMessageBytes, _ = proto.Marshal(small_protoMessage)
+			jsonMessage = small_jsonMessage
+			fmt.Println("Small messages")
+		case "m":
+			protoMessageBytes, _ = proto.Marshal(medium_protoMessage)
+			jsonMessage = medium_jsonMessage
+			fmt.Println("Medium messages")
+		case "b":
+			protoMessageBytes, _ = proto.Marshal(big_protoMesage)
+			jsonMessage = big_jsonMessage
+			fmt.Println("Big messages")
+		}
+	} else {
+		times = 20000
+		jsonMessage = small_jsonMessage
+		protoMessageBytes, _ = proto.Marshal(small_protoMessage)
 	}
 
-	data, _ = proto.Marshal(small_protoMessage)
+	fmt.Printf("%d times\n", times)
 
 	http.HandleFunc("/proto", wsHandlerProto)
 
 	http.HandleFunc("/json", wsHandlerJson)
+
+	profileStart = profile.Start(profile.ProfilePath(os.Getenv("GOPATH") + "/pprofs"))
 
 	_ = http.ListenAndServe("localhost:8080", nil)
 

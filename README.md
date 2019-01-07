@@ -1,5 +1,18 @@
-Current results over 20_000 websockets messages exchanged:
+Current outcome from the ./results/results.txt. Also check the pdfs in the results package for the cpu profiling.
 
-### 20000 Protobufs binary messages exchanged time: 715.506668ms
+```
+Small messages
+100000 times
+Protobufs elapsed time: 4.820889089s
+JSON elapsed time: 5.254548231s
 
-### 20000 JSON text messages exchanged time: 535.982556ms
+Medium messages
+100000 times
+Protobufs elapsed time: 5.34853504s
+JSON elapsed time: 5.747886991s
+
+Big messages
+100000 times
+Protobufs elapsed time: 5.335504258s
+JSON elapsed time: 6.457228259s
+```

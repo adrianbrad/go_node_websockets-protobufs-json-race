@@ -2,176 +2,195 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
-	"./message"
+	"websockets-protobufs-json-race/proto"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 )
 
-var times = int32(10)
+var (
+	times = 20000
+	count = 0
+	data  []byte
 
-var count = int32(0)
+	small_protoMessage = &message.Message{
+		Integer:  9,
+		Floating: 1.1,
+	}
 
-var data []byte
+	medium_protoMessage = &message.Message{
+		Integer:  math.MaxInt32,
+		Floating: math.MaxFloat32,
+		Pairs: []*message.TextNumberPair{
+			{
+				Text:   "Lorem ipsum",
+				Number: math.MaxInt32,
+			},
+		},
+	}
 
-var jsonMessage messageJson
+	big_protoMesage = &message.Message{
+		Integer:  math.MaxInt64,
+		Floating: math.MaxFloat64,
+		Pairs: []*message.TextNumberPair{
+			{
+				Text:   "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+				Number: math.MaxInt64,
+			},
+		},
+	}
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		if r.Host == "localhost:8080" {
-			return true
-		}
-		return false
-	},
-}
+	small_jsonMessage = messageJson{
+		Integer:  9,
+		Floating: 1.1,
+	}
+
+	medium_jsonMessage = messageJson{
+		Integer:  math.MaxInt32,
+		Floating: math.MaxFloat32,
+		Pairs: []*textNumberPair{
+			{
+				Text:   "Lorem ipsum",
+				Number: math.MaxInt32,
+			},
+		},
+	}
+
+	big_jsonMessage = messageJson{
+		Integer:  math.MaxInt64,
+		Floating: math.MaxFloat64,
+		Pairs: []*textNumberPair{
+			{
+				Text:   "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+				Number: math.MaxInt64,
+			},
+		},
+	}
+
+	upgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			if "ws://"+r.Host == r.Header.Get("Origin") {
+				return true
+			}
+			return false
+		},
+	}
+)
 
 type messageJson struct {
-	Times int32                        `json:"times"`
-	Pair  []*StringInt32NumberPairJson `json:"pairs"`
+	Integer  int               `json:"integer,omitempty"`
+	Floating float64           `json:"float,omitempty"`
+	Pairs    []*textNumberPair `json:"pairs,omitempty"`
 }
 
-type StringInt32NumberPairJson struct {
-	Str         string `json:"string"`
-	Int32Number int32  `json:"number"`
+type textNumberPair struct {
+	Text   string `json:"text,omitempty"`
+	Number int    `json:"number,omitempty"`
 }
 
 func wsHandlerProto(w http.ResponseWriter, r *http.Request) {
-	start := time.Now()
 
-	conn, _ := upgrader.Upgrade(w, r, nil) // error ignored
+	wsProtoConnection, _ := upgrader.Upgrade(w, r, nil) // error ignored
 
-	//conn.EnableWriteCompression(true)
-	//firstMsg := time.Now()
-	//fmt.Println(firstMsg.Nanosecond())
+	_ = wsProtoConnection.WriteMessage(websocket.BinaryMessage, data)
 
-	_ = conn.WriteMessage(websocket.BinaryMessage, data)
+	_, _, _ = wsProtoConnection.ReadMessage()
 
-	//endSendingFirstMsg := time.Now()
-	//fmt.Println(endSendingFirstMsg.Nanosecond())
-	//
-	//
-	//elapsedTimeSendingMsg := endSendingFirstMsg.Sub(firstMsg)
-	//fmt.Print("Protobufs sending first msg elapsed time: " + string(elapsedTimeSendingMsg.String()+"\n"))
-
-	for {
-
-		//startReadingBytesTime := time.Now()
-
-		_, msg, _ := conn.ReadMessage() // FIRST TIME THIS IS SO SLOW
-
-		//endReadingBytesTime := time.Now()
-
-		//elapsedTimeReadingBytes := endReadingBytesTime.Sub(startReadingBytesTime)
-		//fmt.Print("Protobufs reading elapsed time: " + string(elapsedTimeReadingBytes.String()+"\n"))
-
-		receivedMessage := &message.Message{}
-
-		_ = proto.Unmarshal(msg, receivedMessage)
-
-		count++
-
-		toSend, _ := proto.Marshal(receivedMessage)
-
-		if err := conn.WriteMessage(websocket.BinaryMessage, toSend); err != nil {
-			return
-		}
-
-		if count == times {
-			_ = conn.Close()
-			t := time.Now()
-			elapsed := t.Sub(start)
-			fmt.Print("Protobufs elapsed time: " + string(elapsed.String()+"\n"))
-			count = 0
-			return
-		}
-	}
+	startProto(wsProtoConnection)
 }
 
 func wsHandlerJson(w http.ResponseWriter, r *http.Request) {
+	wsJsonConnection, _ := upgrader.Upgrade(w, r, nil) // error ignored
+
+	_ = wsJsonConnection.WriteJSON(big_jsonMessage)
+
+	_ = wsJsonConnection.ReadJSON(&big_jsonMessage)
+
+	startJson(wsJsonConnection)
+}
+
+func startProto(wsProtoConnection *websocket.Conn) {
+
+	count = 0
+
+	_ = wsProtoConnection.WriteMessage(websocket.BinaryMessage, data)
+
+	var (
+		receivedMessageBytes        []byte
+		receivedMessageUnmarshalled = &message.Message{}
+		messageToBeSent             []byte
+	)
+
 	start := time.Now()
-
-	conn, _ := upgrader.Upgrade(w, r, nil) // error ignored
-
-	_ = conn.WriteJSON(jsonMessage)
-
 	for {
-		msg := messageJson{}
 
-		//startReadingJsonTime := time.Now()
+		_, receivedMessageBytes, _ = wsProtoConnection.ReadMessage()
 
-		_ = conn.ReadJSON(&msg)
+		_ = proto.Unmarshal(receivedMessageBytes, receivedMessageUnmarshalled)
 
-		//endReadingJsonTime := time.Now()
-		//elapsedTimeReadingJson := endReadingJsonTime.Sub(startReadingJsonTime)
+		messageToBeSent, _ = proto.Marshal(receivedMessageUnmarshalled)
 
-		//fmt.Print("Json reading elapsed time: " + string(elapsedTimeReadingJson.String()) + "\n")
+		_ = wsProtoConnection.WriteMessage(websocket.BinaryMessage, messageToBeSent)
 
 		count++
 
-		if err := conn.WriteJSON(msg); err != nil {
+		if count == times {
+			end := time.Now()
+			elapsedTime := end.Sub(start)
+
+			_ = wsProtoConnection.Close()
+			fmt.Printf("Protobufs elapsed time: %s\n", elapsedTime.String())
 			return
 		}
+	}
+}
+
+func startJson(wsJsonConnection *websocket.Conn) {
+
+	count = 0
+
+	_ = wsJsonConnection.WriteJSON(small_jsonMessage)
+
+	start := time.Now()
+	for {
+
+		_ = wsJsonConnection.ReadJSON(&small_jsonMessage)
+
+		count++
+
+		_ = wsJsonConnection.WriteJSON(small_jsonMessage)
 
 		if count == times {
-			_ = conn.Close()
-			t := time.Now()
-			elapsed := t.Sub(start)
-			fmt.Print("Json elapsed time: " + string(elapsed.String()+"\n"))
+			_ = wsJsonConnection.Close()
+			end := time.Now()
+			elapsedTime := end.Sub(start)
+			fmt.Printf("JSON elapsed time: %s\n", elapsedTime.String())
 			count = 0
 			return
 		}
 	}
-
 }
 
 func main() {
+	//defer profile.Start().Stop()
+	if len(os.Args) > 1 {
+		if givenTimes, err := strconv.Atoi(os.Args[1]); err == nil {
+			times = givenTimes
+		}
+	}
 
-	data, _ = composeBinaryPayload()
-
-	jsonMessage = composeJsonPayload()
+	data, _ = proto.Marshal(small_protoMessage)
 
 	http.HandleFunc("/proto", wsHandlerProto)
 
 	http.HandleFunc("/json", wsHandlerJson)
 
 	_ = http.ListenAndServe("localhost:8080", nil)
-}
 
-func composeBinaryPayload() ([]byte, error) {
-	pairs := make([]*message.StringInt32NumberPair, 1)
-
-	pair := message.StringInt32NumberPair{
-		Str:         "First Pair",
-		Int32Number: int32(1234567891),
-	}
-
-	pairs = append(pairs, &pair)
-
-	msg := &message.Message{
-		Times: 123,
-		Pair:  pairs,
-	}
-
-	return proto.Marshal(msg)
-}
-
-func composeJsonPayload() messageJson {
-	pairs := make([]*StringInt32NumberPairJson, 1)
-
-	pair := StringInt32NumberPairJson{
-		Str:         "First Pair",
-		Int32Number: int32(1234567891),
-	}
-
-	pairs = append(pairs, &pair)
-
-	msg := messageJson{
-		Times: 123,
-		Pair:  pairs,
-	}
-
-	return msg
 }

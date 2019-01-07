@@ -1,7 +1,8 @@
 Current outcome from the ./results/results.txt. Also check the pdfs in the results package for the cpu profiling.
 
 ####Messages used:
-#####Small:
+
+##### Small:
 ```json
 {
     "integer":9,
@@ -9,7 +10,7 @@ Current outcome from the ./results/results.txt. Also check the pdfs in the resul
 }
 ```
 
-#####Medium:
+##### Medium:
 ```json
 {
     "integer":2147483647,
@@ -23,7 +24,7 @@ Current outcome from the ./results/results.txt. Also check the pdfs in the resul
 }
 ```
 
-#####Big:
+##### Big:
 ```json
 {  
    "integer":9223372036854775807,

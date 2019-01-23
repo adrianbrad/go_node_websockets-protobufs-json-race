@@ -1,6 +1,8 @@
+I wrote a Websocket server in GO and a Websocket client in Node for testing the performance of websockets messages sent using Protobufs over binary messages versus JSON sent over text messages. You can find the outcome below.
+
 Current outcome from the ./results/results.txt. Also check the pdfs in the results package for the cpu profiling.
 
-####Messages used:
+#### Messages used:
 
 ##### Small:
 ```json

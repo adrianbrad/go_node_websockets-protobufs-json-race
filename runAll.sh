@@ -4,8 +4,8 @@
 
 for size in s m b
 do
-    go run ./ws-server/websockets-server.go 100000 $size >> ./results/results.txt &
-    sleep 1
+    websockets-server 10000 $size >> ./results/results.txt &
+    sleep .3
     node ./ws-client/client.js &
     wait
 

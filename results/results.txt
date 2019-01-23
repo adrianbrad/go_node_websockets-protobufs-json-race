@@ -1,15 +1,15 @@
 Small messages
-100000 times
-Protobufs elapsed time: 4.820889089s
-JSON elapsed time: 5.254548231s
+10000 times
+Protobufs elapsed time: 535.049108ms
+JSON elapsed time: 543.517179ms
 
 Medium messages
-100000 times
-Protobufs elapsed time: 5.34853504s
-JSON elapsed time: 5.747886991s
+10000 times
+Protobufs elapsed time: 566.543966ms
+JSON elapsed time: 588.473684ms
 
 Big messages
-100000 times
-Protobufs elapsed time: 5.335504258s
-JSON elapsed time: 6.457228259s
+10000 times
+Protobufs elapsed time: 575.288167ms
+JSON elapsed time: 669.076096ms
 

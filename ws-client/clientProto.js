@@ -5,10 +5,9 @@ const host = "ws://localhost:8080"
 
 class WebsocketConnection {
 
-    constructor(host, endpoint, closeCb) {
+    constructor(host, endpoint) {
         this._endpoint = endpoint;
         this._host = host;
-        this._closeCb = closeCb;
     }
 
     connect() {
@@ -21,27 +20,17 @@ class WebsocketConnection {
     }
 
     onOpen() {
-        // console.log('connected ' + this._endpoint);
+        console.log('connected ' + this._endpoint);
     }
 
     incomingMessage(data) {
         this._ws.send(data)
-        this._ws.close()
     }
 
     onClose() {
         // console.log('disconnected ' + this._endpoint);
-        if (this._closeCb) this._closeCb();
     }
 }
 
-
-var wsProto = new WebsocketConnection(host, "proto", startJs);
+var wsProto = new WebsocketConnection(host, "proto");
 wsProto.connect();
-
-function startJs() {
-    const js = new WebsocketConnection(host, "json");
-    js.connect();
-}
-
-

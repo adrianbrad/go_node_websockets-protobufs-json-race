@@ -84,7 +84,7 @@ var (
 	protoMessageBytes []byte
 	jsonMessage       messageJson
 	profileStart      interface{ Stop() }
-	//profileStart profile.Profile
+	//profileStarta profile.Profile
 )
 
 type messageJson struct {
@@ -215,8 +215,9 @@ func main() {
 
 	http.HandleFunc("/json", wsHandlerJson)
 
+	//profileStarta := pprof.NewProfile("memory")
+	//profileStarta.
 	profileStart = profile.Start(profile.ProfilePath(os.Getenv("GOPATH") + "/pprofs"))
 
 	_ = http.ListenAndServe("localhost:8080", nil)
-
 }

@@ -1,7 +1,6 @@
 package benchmarks
 
 import (
-	"fmt"
 	"math"
 	"net/http"
 	message "websockets-protobufs-json-race/proto"
@@ -41,13 +40,10 @@ func (wss *wsServerProtobufs) initConnection() {
 
 func (wss *wsServerProtobufs) wsHandlerProto(w http.ResponseWriter, r *http.Request) {
 	wss.connection, _ = upgrader.Upgrade(w, r, nil)
-	fmt.Println("Client connected")
 
 	_ = wss.connection.WriteMessage(websocket.BinaryMessage, wss.protoMessageBytes)
-	fmt.Println("Send verification message")
 
 	_, _, _ = wss.connection.ReadMessage() //just used for initialization and caching
-	fmt.Println("Received verification message")
 
 	wss.init <- true
 }

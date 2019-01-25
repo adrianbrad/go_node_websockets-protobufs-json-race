@@ -97,6 +97,5 @@ func (wss *wsServerProtobufs) SetMessageSize(size messageSize) {
 }
 
 func (wss *wsServerProtobufs) CloseConnection() {
-	fmt.Println("Closed conn")
 	wss.connection.Close()
 }

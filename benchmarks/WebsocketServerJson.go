@@ -1,7 +1,6 @@
 package benchmarks
 
 import (
-	"fmt"
 	"math"
 	"net/http"
 
@@ -43,14 +42,10 @@ func (wss *wsServerJson) initConnection() {
 
 func (wss *wsServerJson) wsHandlerJson(w http.ResponseWriter, r *http.Request) {
 	wss.connection, _ = upgrader.Upgrade(w, r, nil)
-	fmt.Println("Client connected")
 
 	_ = wss.connection.WriteJSON(wss.jsonMessage)
 
-	fmt.Println("Send verification message")
-
 	_ = wss.connection.ReadJSON(wss.jsonMessage)
-	fmt.Println("Received verification message")
 
 	wss.init <- true
 }
@@ -98,6 +93,5 @@ func (wss *wsServerJson) SetMessageSize(size messageSize) {
 }
 
 func (wss *wsServerJson) CloseConnection() {
-	fmt.Println("Closed conn")
 	wss.connection.Close()
 }

@@ -26,7 +26,6 @@ class WebsocketConnection {
 
     incomingMessage(data) {
         this._ws.send(data)
-        this._ws.close()
     }
 
     onClose() {

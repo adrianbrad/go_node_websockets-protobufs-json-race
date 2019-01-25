@@ -1,5 +1,5 @@
 'use strict';
-const Message = require('./message_pb');
+
 const WebSocket = require('ws');
 const host = "ws://localhost:8080"
 
@@ -30,5 +30,5 @@ class WebsocketConnection {
     }
 }
 
-var wsProto = new WebsocketConnection(host, "proto");
+var wsProto = new WebsocketConnection(host, "json");
 wsProto.connect();

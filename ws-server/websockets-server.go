@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/pkg/profile"
 	"math"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
-	"websockets-protobufs-json-race/proto"
+	"github.com/pkg/profile"
+
+	message "websockets-protobufs-json-race/proto"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
